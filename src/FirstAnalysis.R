@@ -163,9 +163,15 @@ write.xlsx(markers0,paste0(outT,"Markers_Clust0.xlsx"),row.names=T)
 markers2 <- FindMarkers(SerClust, ident.1 = 2, ident.2 = NULL)
 markers2 <- subset(markers2, markers2$avg_logFC>0)
 write.xlsx(markers2,paste0(outT,"Markers_Clust2.xlsx"),row.names=T)
+markers3 <- FindMarkers(SerClust, ident.1 = 3, ident.2 = NULL)
+markers3 <- subset(markers3, markers3$avg_logFC>0)
+write.xlsx(markers3,paste0(outT,"Markers_Clust3.xlsx"),row.names=T)
 markers4 <- FindMarkers(SerClust, ident.1 = 4, ident.2 = NULL)
 markers4 <- subset(markers4, markers4$avg_logFC>0)
 write.xlsx(markers4,paste0(outT,"Markers_Clust4.xlsx"),row.names=T)
+markers5 <- FindMarkers(SerClust, ident.1 = 5, ident.2 = NULL)
+markers5 <- subset(markers5, markers5$avg_logFC>0)
+write.xlsx(markers5,paste0(outT,"Markers_Clust5.xlsx"),row.names=T)
 
 
 
