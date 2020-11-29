@@ -28,3 +28,7 @@ vignettes/*.pdf
 .Renviron
 /data/
 SerotinergicProgenitors.Rproj
+/output/
+/bibliography/
+To Do.txt
+project evolution.pptx

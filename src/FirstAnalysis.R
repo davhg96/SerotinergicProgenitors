@@ -52,21 +52,26 @@ write.xlsx(markersd303D, paste0(outT, "d303D.xlsx"),row.names=T)
 
 
 # pltos ====
-common <- subset(markersUNC, rownames(markersCUL) %in% rownames(markersUNC))
+common <- merge(markersUNC,markersCUL, by=0)
 write.xlsx(common, paste0(outT, "common.xlsx"),row.names=T)
-expressed <- subset(common, common$p_val_adj<0.001 & common$avg_logFC>0)
+expressed <- subset(common, common$p_val_adj.x<0.001 & common$avg_logFC.x>0)
+rownames(expressed) <- expressed$Row.names
+expressed <- expressed[,2:ncol(expressed)]
 write.xlsx(expressed, paste0(outT, "Common_Expressed.xlsx"),row.names=T)
 
 genes <- rownames(expressed)
+
 pUNC <- FeaturePlot(uncultured, features = genes, reduction = "umap", cols = c("grey", "red", "black"))
 ggsave("FPlotUncultured.pdf", plot = pUNC, path = outP, dpi = 600, width = 40, height = 30, units = "cm")
 pCUL <- FeaturePlot(cultured, features = genes, reduction = "umap", cols = c("grey", "red", "black"))
 ggsave("FplotCultured.pdf", plot = pCUL, path = outP, dpi = 600,  width = 40, height = 30, units = "cm")
 
+
 vUNC <- VlnPlot(uncultured, features = genes,pt.size = 0)
 ggsave("VPlotUncultured.pdf", plot = vUNC, path = outP, dpi = 600, width = 40, height = 30, units = "cm")
 vCUL <- VlnPlot(cultured, features = genes,pt.size = 0)
 ggsave("VPlotCultured.pdf", plot = vCUL, path = outP, dpi = 600, width = 40, height = 30, units = "cm")
+
 
 dotUNC <- DotPlot(uncultured, features = genes)+coord_flip()+ theme(axis.text.x = element_text(angle = 45, hjust=1))
 ggsave("DotUncultured.pdf", plot = dotUNC, path = outP, dpi = 600)
