@@ -10,6 +10,7 @@ dir.create(outP, recursive = TRUE, showWarnings = FALSE)
 outT <-  paste0( outdir, "tables/")
 dir.create(outT, recursive = TRUE,showWarnings = FALSE )
 pval=0.01
+rpkm_mean_thrshld <- 10
 }
 
 # markers <- GetGeneList("./data/markers/")
@@ -17,8 +18,15 @@ pval=0.01
 #read the data
 uncultured <- readRDS("./data/seurat.uncultured.20200903.rds")
 Idents(uncultured) <- uncultured@meta.data$shortName
+uncultured <- UpdateSeuratObject(uncultured)
+#SaveH5Seurat(uncultured, filename = "./data/scp/uncultured.h5Seurat")#write it
+#Convert("./data/scp/uncultured.h5Seurat", dest = "h5ad")#transform it
+
 cultured <- readRDS("./data/all_cells.cultured.annotated.20200826.rds")
 Idents(cultured) <- cultured@meta.data$AssignedIdentities
+cultured <- UpdateSeuratObject(cultured)
+#SaveH5Seurat(cultured, filename = "./data/scp/cultured.h5Seurat")#write it
+#Convert("./data/scp/cultured.h5Seurat", dest = "h5ad")#transform it
 
 #Diff exp-----
 
@@ -145,4 +153,110 @@ rm(list=setdiff(ls(), c("outdir","outP","outT")))
 
 #Plotting----
 timepoint <- read.xlsx(paste0(outT,"Table_3.1_markersUNC-TIME_all.xlsx"))
+rownames(timepoint) <- timepoint$ID
 rpkm <- read.xlsx(paste0(outT,"Table_2.1_Counts_RPKM_All.xlsx"))
+rownames(rpkm) <- rpkm$id
+rpkm$mean <- rowMeans(rpkm[,-1]) 
+rpkm <- rpkm[order(-rpkm$mean),,drop=FALSE]
+topN <- subset(rpkm$id, rpkm$mean>rpkm_mean_thrshld)
+
+topNtime <- subset(timepoint, rownames(timepoint) %in% topN)
+#All samples
+plotdf <-  data.frame(ID=rpkm$id,
+                      mean=apply(rpkm[,2:ncol(rpkm)],1,mean),
+                      SD=apply(rpkm[,2:ncol(rpkm)],1,sd))
+
+ggplot(data = plotdf, aes(x=ID, y=mean))+
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-SD, ymax=mean+SD), width=.2,
+                position=position_dodge(.9)) +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 75, vjust = 0.5, hjust=0.5, size = 8))
+
+ggsave("Barplot_expression_D0_all_samples.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
+
+
+#Published samples
+plotdf <-  data.frame(ID=rpkm$id,
+                      mean=apply(rpkm[,2:16],1,mean),
+                      SD=apply(rpkm[,2:16],1,sd))
+
+ggplot(data = plotdf, aes(x=ID, y=mean))+
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-SD, ymax=mean+SD), width=.2,
+                position=position_dodge(.9)) +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 75, vjust = 0.5, hjust=0.5, size = 8))
+
+ggsave("Barplot_expression_D0_published_samples.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
+
+
+# Timepoints
+datatp <- na.omit(timepoint)
+datatp <- datatp[,c(1,3,8,13)]
+datatp <- gather(datatp, key = "day", value = "avg_LFC", avg_logFC_D0,avg_logFC_D14, avg_logFC_D30)
+datatp$day <- sapply(strsplit(datatp$day, "_"), tail, 1)
+datatp$day <- sapply(substr(datatp$day,2,4),tail,1)
+
+plotdf <- datatp
+plotdf$ID <- as.factor(plotdf$ID)
+plotdf$day <- as.numeric(plotdf$day)
+labels <- subset(plotdf, plotdf$day==30)
+
+ggplot(plotdf, aes(x=day, y=avg_LFC, group=ID, color=ID))+
+  geom_line() +
+  geom_point(aes(fill=ID),shape=21, size=2) +
+  ggrepel::geom_label_repel(data=labels, 
+                            aes(label=ID,
+                                x=day,
+                                y=avg_LFC),
+                            size=5,
+                            box.padding   = 0.5, 
+                            point.padding = 0.5,
+                            segment.color = 'grey50')+
+  theme_minimal() +
+  theme(legend.position = "none")+
+  xlim(0,35)+
+  ggtitle("Average logFold change over time")
+ggsave("AVG_LFC_overTime.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )
+  
+#Top 6
+datatp <- topNtime[,c(1,3,8,13)]
+datatp <- gather(datatp, key = "day", value = "avg_LFC", avg_logFC_D0,avg_logFC_D14, avg_logFC_D30)
+datatp$day <- sapply(strsplit(datatp$day, "_"), tail, 1)
+datatp$day <- sapply(substr(datatp$day,2,4),tail,1)
+
+plotdf <- datatp
+plotdf$ID <- as.factor(plotdf$ID)
+plotdf$day <- as.numeric(plotdf$day)
+labels <- data.frame(ID=levels(plotdf$ID), 
+                     day=rep(3,length(levels(plotdf$ID))),
+                     avg_LFC=rep(4,length(levels(plotdf$ID)))) 
+rownames(labels) <- labels$ID
+for (gene in labels$ID){
+  info <- subset(plotdf, plotdf$ID==gene) %>% na.omit()
+  labels[gene, "day"] <- tail(info$day,1)
+  labels[gene, "avg_LFC"] <- tail(info$avg_LFC,1)
+}
+
+ggplot(plotdf, aes(x=day, y=avg_LFC, group=ID, color=ID))+
+  geom_line() +
+  geom_point(aes(fill=ID),shape=21, size=2) +
+  ggrepel::geom_label_repel(data=labels, 
+                            aes(label=ID,
+                                x=day,
+                                y=avg_LFC),
+                            size=5,
+                            box.padding   = 0.5, 
+                            point.padding = 0.5,
+                            segment.color = 'grey50')+
+  theme_minimal() +
+  theme(legend.position = "none")+
+  xlim(0,35)+
+  ggtitle("Average logFold change over time")
+ggsave(paste0("AVG_LFC_overTime_TopN_rpkm_meanTrshld=",rpkm_mean_thrshld, ".pdf"), 
+       path = outP,device = "pdf", height = 15, width = 30, units = "cm" )
+
+
