@@ -12,7 +12,7 @@ dir.create(outT, recursive = TRUE,showWarnings = FALSE )
 pval=0.01
 rpkm_mean_thrshld <- 10
 }
-
+genes <- c("FEV", "TPH2","SLC18A2","CRYBA2","SLC6A4")
 # markers <- GetGeneList("./data/markers/")
 
 #read the data
@@ -158,6 +158,7 @@ rpkm <- read.xlsx(paste0(outT,"Table_2.1_Counts_RPKM_All.xlsx"))
 rownames(rpkm) <- rpkm$id
 rpkm$mean <- rowMeans(rpkm[,-1]) 
 rpkm <- rpkm[order(-rpkm$mean),,drop=FALSE]
+rpkm <- rpkm[-c(1),]
 topN <- subset(rpkm$id, rpkm$mean>rpkm_mean_thrshld)
 
 topNtime <- subset(timepoint, rownames(timepoint) %in% topN)
@@ -174,7 +175,7 @@ ggplot(data = plotdf, aes(x=ID, y=mean))+
   theme(text = element_text(size=20),
         axis.text.x = element_text(angle = 75, vjust = 0.5, hjust=0.5, size = 8))
 
-ggsave("Barplot_expression_D0_all_samples.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
+ggsave("Barplot_expression_D0_all_samples-FSTL.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
 
 
 #Published samples
@@ -190,7 +191,7 @@ ggplot(data = plotdf, aes(x=ID, y=mean))+
   theme(text = element_text(size=20),
         axis.text.x = element_text(angle = 75, vjust = 0.5, hjust=0.5, size = 8))
 
-ggsave("Barplot_expression_D0_published_samples.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
+ggsave("Barplot_expression_D0_published_samples-FSTL.pdf", path = outP,device = "pdf", height = 15, width = 30, units = "cm" )  
 
 
 # Timepoints
@@ -260,3 +261,11 @@ ggsave(paste0("AVG_LFC_overTime_TopN_rpkm_meanTrshld=",rpkm_mean_thrshld, ".pdf"
        path = outP,device = "pdf", height = 15, width = 30, units = "cm" )
 
 
+
+
+UMAPPlot(uncultured)
+for (g in genes){
+FeaturePlot(uncultured, features = g, cols = c("grey", "red","black"))
+  ggsave(paste0("FeatPlot_",g,".pdf"), 
+         path = outP,device = "pdf")
+}
