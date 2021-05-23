@@ -19,14 +19,12 @@ genes <- c("FEV", "TPH2","SLC18A2","CRYBA2","SLC6A4")
 uncultured <- readRDS("./data/seurat.uncultured.20200903.rds")
 Idents(uncultured) <- uncultured@meta.data$shortName
 uncultured <- UpdateSeuratObject(uncultured)
-#SaveH5Seurat(uncultured, filename = "./data/scp/uncultured.h5Seurat")#write it
-#Convert("./data/scp/uncultured.h5Seurat", dest = "h5ad")#transform it
+
 
 cultured <- readRDS("./data/all_cells.cultured.annotated.20200826.rds")
 Idents(cultured) <- cultured@meta.data$AssignedIdentities
 cultured <- UpdateSeuratObject(cultured)
-#SaveH5Seurat(cultured, filename = "./data/scp/cultured.h5Seurat")#write it
-#Convert("./data/scp/cultured.h5Seurat", dest = "h5ad")#transform it
+
 
 #Diff exp-----
 
