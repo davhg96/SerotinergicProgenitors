@@ -9,6 +9,10 @@ remotes::install_github("rstudio/renv")
 ```
 At this point you should have all necessary files downloaded in a directory in your local machine, check that you can see a file called `rent.lock`. Set the working directory to that folder and run `renv::restore()` to install all the necessary packages and versions to reproduce this analysis.
 
+# Input data
+Prior to this analysis the datasets were manually annotated using the cellranger pipeline as well as Seurat’s standard protocols for downstream analyses. For this analyses 
+.RDS files containing the anotated datasets were obtained. As well as gene RPKM values.
+
 # Analisis files
 
 All these scripts will access the data from a data directory located in your working directory and will create an output directory with all the output automatically.
